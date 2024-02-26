@@ -2,6 +2,8 @@ name: List Issues and Output as CSV
 
 on:
   workflow_dispatch:
+  # schedule:
+  #   - cron: '*/10 * * * *'
   issues:
     types: [opened, closed, reopened]
   pull_request:
