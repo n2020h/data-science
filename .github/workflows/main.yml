@@ -2,31 +2,29 @@ name: List Issues and Output as CSV
 
 on:
   workflow_dispatch:
-
+  issues:
+    types: [opened, closed, reopened]
+  pull_request:
+    types: [opened, closed, reopened]
+  
 jobs:
   list-issues:
     runs-on: ubuntu-latest
     steps:
-      - name: List Issues for Repository
-        id: list_issues
+      # Checkout the repo to access any scripts or tools you might need
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      # Generate issues CSV
+      - name: Generate issues CSV
         run: |
-          echo "issue_id,issue_title,issue_state" > issues.csv
-          PAGE=1
-          while :; do
-            RESPONSE=$(gh api repos/$ORGANIZATION/website/issues -f state=all -f per_page=100 -f page=$PAGE)
-            echo "$RESPONSE" | jq -r '.[] | "\(.id),\(.title),\(.state)"' >> issues.csv
-            COUNT=$(echo "$RESPONSE" | jq length)
-            if [ "$COUNT" -lt 100 ]; then
-              break
-            fi
-            ((PAGE++))
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORGANIZATION: 'hackforla' 
-
-      - name: Upload CSV as Artifact
+          echo "Issue Number,Title,Labels" > issues.csv
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100" | \
+          jq -r '.[] | select(.pull_request == null) | [.number, .title, (.labels | map(.name) | join(","))] | @csv' >> issues.csv
+      # Upload CSV as artifact
+      - name: Upload CSV as artifact
         uses: actions/upload-artifact@v2
         with:
-          name: issues.csv
+          name: issues-csv
           path: issues.csv
