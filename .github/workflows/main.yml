@@ -23,8 +23,16 @@ jobs:
                "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100" | \
           jq -r '.[] | select(.pull_request == null) | [.number, .title, (.labels | map(.name) | join(","))] | @csv' >> issues.csv
       # Upload CSV as artifact
-      - name: Upload CSV as artifact
-        uses: actions/upload-artifact@v2
+      # - name: Upload CSV as artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: issues-csv
+      #     path: issues.csv
+
+      # add csv to repository
+      - name: Commit CSV to Repository
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          name: issues-csv
-          path: issues.csv
+          commit_message: "Update issues CSV"
+          file_pattern: issues.csv
+          branch: main
