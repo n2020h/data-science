@@ -24,17 +24,34 @@ jobs:
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100" | \
           jq -r '.[] | select(.pull_request == null) | [.number, .title, (.labels | map(.name) | join(","))] | @csv' >> issues.csv
-      # Upload CSV as artifact
-      - name: Upload CSV as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: issues-csv
-          path: issues.csv
+          
+      # Step 3: Commit and push if there are changes
+      - name: Commit and push
+        run: |
+          git config user.name "Automated"
+          git config user.email "actions@users.noreply.github.com"
+          # Sets Git configuration for the commit
+          git add issues.csv
+          # Stages the downloaded file for commit
+          timestamp=$(date -u)
+          # Saves the current UTC time in a variable
+          git commit -m "Latest data: ${timestamp}" || exit 0
+          # Commits the changes with a timestamp. '|| exit 0' ensures the workflow doesn't fail if there's nothing to commit
+          git push origin HEAD:${{ github.ref }}
+          # Pushes the commit to the same branch that triggered the workflow
 
-      # add csv to repository
-      - name: Commit CSV to Repository
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Update issues CSV"
-          file_pattern: issues.csv
-          branch: main
+      
+      # # Upload CSV as artifact
+      # - name: Upload CSV as artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: issues-csv
+      #     path: issues.csv
+
+      # # add csv to repository
+      # - name: Commit CSV to Repository
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: "Update issues CSV"
+      #     file_pattern: issues.csv
+      #     branch: main
