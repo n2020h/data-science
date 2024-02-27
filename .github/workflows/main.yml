@@ -31,7 +31,7 @@ jobs:
           git config user.name "Automated"
           git config user.email "actions@users.noreply.github.com"
           # Sets Git configuration for the commit
-          git add issues.csv
+          git add -f issues.csv
           # Stages the downloaded file for commit
           timestamp=$(date -u)
           # Saves the current UTC time in a variable
